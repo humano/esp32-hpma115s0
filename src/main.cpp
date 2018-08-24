@@ -15,6 +15,9 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 #include <U8g2lib.h>
+#include "FS.h"
+#include "SD.h"
+#include "SPI.h"
 
 using namespace std;
 
@@ -258,6 +261,85 @@ void bleLoop(){
     oldDeviceConnected = deviceConnected;
   }
 }
+/******************************************************************************
+*   M I C R O S D   M E T H O D S
+******************************************************************************/
+
+void appendFile(fs::FS &fs, const char * path, const char * message){
+  Serial.printf("Appending to file: %s\n", path);
+
+  File file = fs.open(path, FILE_APPEND);
+  if(!file){
+    Serial.println("Failed to open file for appending");
+    return;
+  }
+  if(file.print(message)){
+    Serial.println("Message appended");
+  } else {
+    Serial.println("Append failed");
+  }
+  file.close();
+}
+
+void writeFile(fs::FS &fs, const char * path, const char * message){
+  Serial.printf("Writing file: %s\n", path);
+
+  File file = fs.open(path, FILE_WRITE);
+  if(!file){
+    Serial.println("Failed to open file for writing");
+    return;
+  }
+  if(file.print(message)){
+    Serial.println("File written");
+  } else {
+    Serial.println("Write failed");
+  }
+  file.close();
+}
+
+void createDir(fs::FS &fs, const char * path){
+  Serial.printf("Creating Dir: %s\n", path);
+  if(fs.mkdir(path)){
+    Serial.println("Dir created");
+  } else {
+    Serial.println("mkdir failed");
+  }
+}
+
+void microSDSetup(){
+  if(!SD.begin()){
+    Serial.println("Card Mount Failed");
+    return;
+  }
+  uint8_t cardType = SD.cardType();
+
+  if(cardType == CARD_NONE){
+    Serial.println("No SD card attached");
+    return;
+  }
+
+  Serial.print("SD Card Type: ");
+  if(cardType == CARD_MMC){
+    Serial.println("MMC");
+  } else if(cardType == CARD_SD){
+    Serial.println("SDSC");
+  } else if(cardType == CARD_SDHC){
+    Serial.println("SDHC");
+  } else {
+    Serial.println("UNKNOWN");
+  }
+
+  uint64_t cardSize = SD.cardSize() / (1024 * 1024);
+  Serial.printf("SD Card Size: %lluMB\n", cardSize);
+
+  createDir(SD,"/hpma115S0data");
+  writeFile(SD, "/hpma115S0data/data.txt", "-- setup mark --");
+}
+
+void microSDMark(){
+  appendFile(SD, "/hpma115S0data/data.txt", "-- loop mark --");
+  delay (1000);
+}
 
 /******************************************************************************
 *  M A I N
@@ -268,6 +350,7 @@ void setup() {
   Serial.println("\n== INIT SETUP ==\n");
   Serial.println("-->[SETUP] console ready");
   displayInit();
+  microSDSetup();
   sensorInit();
   bleServerInit();
   showWelcome();
@@ -277,4 +360,5 @@ void setup() {
 void loop() {
   hpmaSerialLoop();
   bleLoop();
+  microSDMark();
 }
