@@ -272,6 +272,7 @@ void setup() {
   bleServerInit();
   showWelcome();
   Serial.println("-->[SETUP] setup ready");
+  delay (1000); //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 }
 
 void loop() {
