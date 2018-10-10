@@ -1,0 +1,11 @@
+64.3x38.5x37.8
+display
+9.12 
+9.6
+sensor input
+16
+sensor output
+3.46
+board over sensor with tape
+7.46
+
